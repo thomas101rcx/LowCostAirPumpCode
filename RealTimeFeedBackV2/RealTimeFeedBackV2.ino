@@ -1,6 +1,8 @@
 #include <Wire.h> 
 #include "RTClib.h"
 #include <SD.h>
+#include <stdint.h>
+
 #define PUMP_A_PIN 5
 #define PUMP_B_PIN 3
 
@@ -9,7 +11,7 @@
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
 
-#define TARGET_FLOW_HIGH 0.60
+#define TARGET_FLOW_HIGH 0.62
 #define TARGET_FLOW_LOW 0.18
 
 //include real time clock in the future 
@@ -27,7 +29,8 @@ RTC_DS3231 rtc;
 String year, month, day, second, hour, minute;
 File myFile;
 String writeString;
-const char * buffer = "HWAF1.txt";
+const char * buffer = "HighFlow.txt";
+const char * buffer1 = "LowFlow.txt";
 void setup() {
   
   Serial.begin(9600);
@@ -64,6 +67,21 @@ void setup() {
    if(SD.begin(10) == false){
     Serial.println("It didn't initialized");
    }
+
+  //Writes in Tstart to SD card
+  year = String(now.year(), DEC);
+  //Convert from Now.year() long to Decimal String object
+  month = String(now.month(), DEC);
+  day = String(now.day(), DEC);
+  hour = String(now.hour(), DEC);
+  minute = String(now.minute(), DEC);
+  second = String(now.second(), DEC);
+  String logHeader = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
+  sdLog(buffer, "TSI Box 1: New Logging Session - " + logHeader);
+  
+  sdLog(buffer1, "TSI Box 1 : New Logging Session - " + logHeader);
+  
+  Serial.println(logHeader);
 
 }
 
@@ -110,10 +128,35 @@ void Return_Low_Flow_Rate(){
   avgFlowlow += (curFlow - avgFlowlow) / 32;
 }
 
+
+
+//Writes into SD card
+void sdLog(const char * fileName, String stringToWrite) {
+  File myFile = SD.open(fileName, FILE_WRITE);
+
+  // if the file opened okay, write to it:
+  if (myFile) {
+    Serial.print("Writing to ");
+    Serial.print(fileName);
+    Serial.print("...");
+    myFile.println(stringToWrite);
+    // close the file:
+    myFile.close();
+    Serial.println("done.");
+  } else {
+    // if the file didn't open, print an error:
+    Serial.print("error opening ");
+    Serial.println(fileName);
+  }
+}
+
+
+
 void loop() {
   static uint16_t i = 0;
   static float pwmhigh = 0.5; // For 0.6 LPM
   static float pwmlow = 0.5;  // For 0.2 LPM
+  static uint64_t j = 0;
 
   Return_High_Flow_Rate();
   Return_Low_Flow_Rate();
@@ -138,9 +181,33 @@ void loop() {
     writePumpB(pwmlow);
         
    // Serial.println(avgFlowlow);
-   Serial.print(pwmhigh*1000);
-   Serial.print(" ");
-   Serial.println(avgFlowhigh*1000);
+   //Serial.print(pwmhigh*1000);
+   //Serial.print(" ");
+   //Serial.println(avgFlowhigh*1000);
   }
-  delay(1);// Every 1msec update the avgflow 
+  j++;
+  //Everysecond log the data into SD card , Time + Flowrate
+  
+  if(j % 1000 == 0){
+  DateTime now = rtc.now();
+  year = String(now.year(), DEC);
+  //Convert from Now.year() long to Decimal String object
+  month = String(now.month(), DEC);
+  day = String(now.day(), DEC);
+  hour = String(now.hour(), DEC);
+  minute = String(now.minute(), DEC);
+  second = String(now.second(), DEC);
+
+  writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + " ";
+
+  sdLog(buffer1, writeString + avgFlowlow);
+  sdLog(buffer, writeString + avgFlowhigh);
+    
+  }
+
+  // Turn off the pump according to specification
+
+
+  
+  delay(1);// Every 1 milisec update the avgflow 
 }

@@ -188,7 +188,7 @@ void loop() {
   j++;
   //Everysecond log the data into SD card , Time + Flowrate
   
-  if(j % 1000 == 0){
+  if(j % 60000 == 0){
   DateTime now = rtc.now();
   year = String(now.year(), DEC);
   //Convert from Now.year() long to Decimal String object
@@ -208,6 +208,6 @@ void loop() {
   // Turn off the pump according to specification
 
 
-  
+    
   delay(1);// Every 1 milisec update the avgflow 
 }

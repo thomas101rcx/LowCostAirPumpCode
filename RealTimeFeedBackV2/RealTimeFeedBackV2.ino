@@ -25,7 +25,6 @@ float avgFlowlow = 0;
 RTC_DS3231 rtc;
 
 
-
 String year, month, day, second, hour, minute;
 File myFile;
 String writeString;
@@ -206,8 +205,5 @@ void loop() {
   }
 
   // Turn off the pump according to specification
-
-
-    
   delay(1);// Every 1 milisec update the avgflow 
 }

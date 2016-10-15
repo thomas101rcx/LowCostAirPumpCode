@@ -12,7 +12,7 @@
 //Any variables that ends with a low  means 0.2LPM
 
 #define TARGET_FLOW_HIGH 0.60
-#define TARGET_FLOW_LOW 0.20
+#define TARGET_FLOW_LOW 0.18
 
 //include real time clock in the future 
 
@@ -52,8 +52,8 @@ void setup() {
 
   //Flow meter high setup
 
-  Wire.beginTransmission(0x49);
-  Wire.endTransmission();
+//  Wire.beginTransmission(0x49);
+//  Wire.endTransmission();
 
   //Pump setup
 
@@ -99,19 +99,19 @@ void writePumpB(float p) {
 }
 
 //Gets the flow readings through I2C protocal (2 bytes) and return the actual flow rate
-void Return_High_Flow_Rate() {
-  float curFlow = 0;
-  uint8_t high = 0;
-  uint16_t digitalcode = 0;
-
-  Wire.requestFrom(0x49, 2);
-  high = Wire.read();
-  digitalcode = (high << 8) + Wire.read();
-
-  curFlow = 0.750 * ((((float) digitalcode / 16384.0) - 0.5) / .4);
-  avgFlowhigh += (curFlow - avgFlowhigh) / 64;
-  //Get the average by dividing a number, how many data points do we need to take the average
-}
+//void Return_High_Flow_Rate() {
+//  float curFlow = 0;
+//  uint8_t high = 0;
+//  uint16_t digitalcode = 0;
+//
+//  Wire.requestFrom(0x49, 2);
+//  high = Wire.read();
+//  digitalcode = (high << 8) + Wire.read();
+//
+//  curFlow = 0.750 * ((((float) digitalcode / 16384.0) - 0.5) / .4);
+//  avgFlowhigh += (curFlow - avgFlowhigh) / 64;
+//  //Get the average by dividing a number, how many data points do we need to take the average
+//}
 
 //Gets the flow readings through I2C protocal (2 bytes) and return the actual flow rate
 void Return_Low_Flow_Rate() {
@@ -125,6 +125,18 @@ void Return_Low_Flow_Rate() {
   avgFlowlow += (curFlow - avgFlowlow) / 32;
 }
 
+
+
+void Return_High_Flow_Rate() {
+  float curFlow = 0;
+  uint16_t sensorvalue = 0;
+
+  sensorvalue = analogRead(A6);
+  float Vo = sensorvalue * (5.0 / 1023.0);
+
+  curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
+  avgFlowhigh += (curFlow - avgFlowhigh) / 32;
+}
 //Writes into SD card
 void sdLog(const char * fileName, String stringToWrite) {
   File myFile = SD.open(fileName, FILE_WRITE);
@@ -173,7 +185,8 @@ void loop() {
     writePumpA(pwmhigh);
     writePumpB(pwmlow);
 
-    // Serial.println(avgFlowlow);
+     Serial.println(avgFlowlow);
+     Serial.println(avgFlowhigh);
     //Serial.print(pwmhigh*1000);
     //Serial.print(" ");
     //Serial.println(avgFlowhigh*1000);

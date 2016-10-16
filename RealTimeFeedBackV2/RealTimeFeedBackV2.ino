@@ -185,8 +185,8 @@ void loop() {
     writePumpA(pwmhigh);
     writePumpB(pwmlow);
 
-     Serial.println(avgFlowlow);
-     Serial.println(avgFlowhigh);
+    Serial.println(avgFlowlow);
+    Serial.println(avgFlowhigh);
     //Serial.print(pwmhigh*1000);
     //Serial.print(" ");
     //Serial.println(avgFlowhigh*1000);
@@ -195,8 +195,8 @@ void loop() {
   
   //Every minute log the data into SD card , Time + Flowrate for desire time ex: 1.5 hours
   
-
   if (j % 60000 == 0 && j <= 5400000) {
+    
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
     //Convert from Now.year() long to Decimal String object
@@ -214,11 +214,11 @@ void loop() {
   }
 
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
+  
   if (j == 5400000) {
     writePumpA(0);
     writePumpB(0);
-
   }
-
+  
   delay(1); // Every 1 milisec update the avgflow 
 }

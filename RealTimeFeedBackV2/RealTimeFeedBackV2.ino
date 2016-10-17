@@ -125,8 +125,6 @@ void Return_Low_Flow_Rate() {
   avgFlowlow += (curFlow - avgFlowlow) / 32;
 }
 
-
-
 void Return_High_Flow_Rate() {
   float curFlow = 0;
   uint16_t sensorvalue = 0;
@@ -161,14 +159,14 @@ void loop() {
   static uint16_t i = 0;
   static float pwmhigh = 0.5; // For 0.6 LPM
   static float pwmlow = 0.5; // For 0.2 LPM
-  static uint64_t j = 0;
-
+  
   Return_High_Flow_Rate();
   Return_Low_Flow_Rate();
 
-  if (i++ % 20 == 0)
+  if (millis() + i >= 0)
   //Every 20 msec update the pump PWM
   {
+    i += 20;
     float errorHigh = TARGET_FLOW_HIGH - avgFlowhigh;
     float errorLow = TARGET_FLOW_LOW - avgFlowlow;
 
@@ -185,17 +183,17 @@ void loop() {
     writePumpA(pwmhigh);
     writePumpB(pwmlow);
 
-    Serial.println(avgFlowlow);
-    Serial.println(avgFlowhigh);
+    //Serial.println(avgFlowlow);
+    //Serial.println(avgFlowhigh);
     //Serial.print(pwmhigh*1000);
     //Serial.print(" ");
     //Serial.println(avgFlowhigh*1000);
   }
-  j++;
+  //j++;
   
   //Every minute log the data into SD card , Time + Flowrate for desire time ex: 1.5 hours
   
-  if (j % 60000 == 0 && j <= 5400000) {
+  if(millis() % 60000 == 0) {  
     
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
@@ -210,15 +208,17 @@ void loop() {
 
     sdLog(buffer1, writeString + avgFlowlow);
     sdLog(buffer, writeString + avgFlowhigh);
+    Serial.println(writeString);
 
   }
 
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
   
-  if (j == 5400000) {
+  if (millis() >= 5400000) {
     writePumpA(0);
     writePumpB(0);
   }
-  
-  delay(1); // Every 1 milisec update the avgflow 
+
+  //Never use delay
+  //delay(1); // Every 1 milisec update the avgflow 
 }

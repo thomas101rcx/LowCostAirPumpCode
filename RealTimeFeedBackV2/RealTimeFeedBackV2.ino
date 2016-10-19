@@ -6,7 +6,7 @@
 #define PUMP_A_PIN 5
 #define PUMP_B_PIN 3
 
-#define FLOW_A_ADDR 0x49
+//#define FLOW_A_ADDR 0x49
 
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
@@ -65,21 +65,17 @@ void setup() {
     Serial.println("It didn't initialized");
   }
 
-  //Writes in Tstart to SD card
+  //Writes in The inital starting time (Tstart) to SD card
   year = String(now.year(), DEC);
-  //Convert from Now.year() long to Decimal String object
   month = String(now.month(), DEC);
   day = String(now.day(), DEC);
   hour = String(now.hour(), DEC);
   minute = String(now.minute(), DEC);
   second = String(now.second(), DEC);
   String logHeader = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
-  sdLog(buffer, "TSI Box 1: New Logging Session - " + logHeader);
-
-  sdLog(buffer1, "TSI Box 1 : New Logging Session - " + logHeader);
-
+  sdLog(buffer, "HighFlowRate_0.6: New Logging Session - " + logHeader);
+  sdLog(buffer1, "LowFlowRate_0.2 : New Logging Session - " + logHeader);
   Serial.println(logHeader);
-
 }
 
 //Writes to pump A, takes a float from 0 to 1
@@ -98,6 +94,7 @@ void writePumpB(float p) {
   analogWrite(PUMP_B_PIN, power);
 }
 
+// This is the code for Digital I2C flow meter
 //Gets the flow readings through I2C protocal (2 bytes) and return the actual flow rate
 //void Return_High_Flow_Rate() {
 //  float curFlow = 0;
@@ -113,14 +110,11 @@ void writePumpB(float p) {
 //  //Get the average by dividing a number, how many data points do we need to take the average
 //}
 
-//Gets the flow readings through I2C protocal (2 bytes) and return the actual flow rate
 void Return_Low_Flow_Rate() {
   float curFlow = 0;
   uint16_t sensorvalue = 0;
-
   sensorvalue = analogRead(A7);
   float Vo = sensorvalue * (5.0 / 1023.0);
-
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowlow += (curFlow - avgFlowlow) / 32;
 }
@@ -128,17 +122,15 @@ void Return_Low_Flow_Rate() {
 void Return_High_Flow_Rate() {
   float curFlow = 0;
   uint16_t sensorvalue = 0;
-
   sensorvalue = analogRead(A6);
   float Vo = sensorvalue * (5.0 / 1023.0);
-
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowhigh += (curFlow - avgFlowhigh) / 32;
 }
+
 //Writes into SD card
 void sdLog(const char * fileName, String stringToWrite) {
   File myFile = SD.open(fileName, FILE_WRITE);
-
   // if the file opened okay, write to it:
   if (myFile) {
     Serial.print("Writing to ");
@@ -159,7 +151,7 @@ void loop() {
   static uint16_t i = 0;
   static float pwmhigh = 0.5; // For 0.6 LPM
   static float pwmlow = 0.5; // For 0.2 LPM
-  
+  //The reason to set pwmhigh and pwmlow is to start with a initial value for the feedback loop to either add up the error or subtract the error, reaching the desire power output -> desire flowrate.
   Return_High_Flow_Rate();
   Return_Low_Flow_Rate();
 
@@ -169,17 +161,13 @@ void loop() {
     i += 20;
     float errorHigh = TARGET_FLOW_HIGH - avgFlowhigh;
     float errorLow = TARGET_FLOW_LOW - avgFlowlow;
-
-    pwmhigh = max(pwmhigh, 0);
-    pwmhigh = min(1, pwmhigh);
-
-    pwmlow = max(pwmlow, 0);
-    pwmlow = min(1, pwmlow);
-
+    pwmhigh = max(pwmhigh, 0); // For pwmhigh < 0
+    pwmhigh = min(1, pwmhigh); // For pwmhigh > 1
+    pwmlow = max(pwmlow, 0); // For pwmhigh < 0 
+    pwmlow = min(1, pwmlow); // For pwmhigh > 1
     pwmhigh += errorHigh / 100;
     pwmlow += errorLow / 100;
-    // 100 is the time constant
-
+    // 100 is a time constant that tells us how precise do we want to get to the desire flow rate/ power output.
     writePumpA(pwmhigh);
     writePumpB(pwmlow);
 
@@ -189,12 +177,11 @@ void loop() {
     //Serial.print(" ");
     //Serial.println(avgFlowhigh*1000);
   }
-  //j++;
   
-  //Every minute log the data into SD card , Time + Flowrate for desire time ex: 1.5 hours
+  //Every minute log the data into SD card , "Time + Flowrate" for desire time,  ex: 1.5 hours
   
-  if(millis() % 60000 == 0) {  
-    
+  if(millis() % 60000 == 0) { 
+     
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
     //Convert from Now.year() long to Decimal String object
@@ -203,22 +190,19 @@ void loop() {
     hour = String(now.hour(), DEC);
     minute = String(now.minute(), DEC);
     second = String(now.second(), DEC);
-
-    writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + " ";
-
+    writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + "   ";
     sdLog(buffer1, writeString + avgFlowlow);
     sdLog(buffer, writeString + avgFlowhigh);
     Serial.println(writeString);
-
+    
   }
 
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
   
-  if (millis() >= 5400000) {
+  if (millis() >= 5400000) {  
+     
     writePumpA(0);
     writePumpB(0);
+    
   }
-
-  //Never use delay
-  //delay(1); // Every 1 milisec update the avgflow 
 }

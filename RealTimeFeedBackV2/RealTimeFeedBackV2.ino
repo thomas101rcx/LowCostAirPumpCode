@@ -41,11 +41,13 @@ void setup() {
 
   DateTime now = rtc.now(); // Catch the time on RTC for now
   DateTime PCTime = DateTime(__DATE__, __TIME__); // Catch the time on PC for now
+  //Serial.println(PCTime.year());
 
   //If any discrepencies , update with the time on PC 
 
-  if (now.unixtime() < PCTime.unixtime()) {
+  if (now.unixtime() < PCTime.unixtime() || now.unixtime() > PCTime.unixtime()) {
     rtc.adjust(DateTime(__DATE__, __TIME__));
+    Serial.println(now.year());
   }
   Wire.begin();
   rtc.begin();
@@ -117,6 +119,7 @@ void Return_Low_Flow_Rate() {
   float Vo = sensorvalue * (5.0 / 1023.0);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowlow += (curFlow - avgFlowlow) / 32;
+  //Serial.println(avgFlowlow);
 }
 
 void Return_High_Flow_Rate() {
@@ -126,6 +129,7 @@ void Return_High_Flow_Rate() {
   float Vo = sensorvalue * (5.0 / 1023.0);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowhigh += (curFlow - avgFlowhigh) / 32;
+  //Serial.println(avgFlowhigh);
 }
 
 //Writes into SD card

@@ -3,8 +3,8 @@
 #include <SD.h> 
 #include <stdint.h>
 
-#define PUMP_A_PIN 5
-#define PUMP_B_PIN 3
+#define PUMP_A_PIN 5 // 0.6LPM
+#define PUMP_B_PIN 3 // 0.2LPM
 
 //#define FLOW_A_ADDR 0x49
 
@@ -194,7 +194,7 @@ void loop() {
     hour = String(now.hour(), DEC);
     minute = String(now.minute(), DEC);
     second = String(now.second(), DEC);
-    writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + "   ";
+    writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + " ";
     sdLog(buffer1, writeString + avgFlowlow);
     sdLog(buffer, writeString + avgFlowhigh);
     Serial.println(writeString);

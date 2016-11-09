@@ -8,6 +8,8 @@
 
 //#define FLOW_A_ADDR 0x49
 
+
+//PumpA is high, PumpB is low
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
 
@@ -127,6 +129,7 @@ void Return_High_Flow_Rate() {
   uint16_t sensorvalue = 0;
   sensorvalue = analogRead(A6);
   float Vo = sensorvalue * (5.0 / 1023.0);
+  //Serial.println(sensorvalue);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowhigh += (curFlow - avgFlowhigh) / 32;
   //Serial.println(avgFlowhigh);
@@ -173,6 +176,9 @@ void loop() {
     pwmlow += errorLow / 100;
     // 100 is a time constant that tells us how precise do we want to get to the desire flow rate/ power output.
     writePumpA(pwmhigh);
+    //Serial.println(pwmhigh);
+    //Serial.println(errorHigh);
+   // Serial.println(avgFlowhigh);
     writePumpB(pwmlow);
 
     //Serial.println(avgFlowlow);

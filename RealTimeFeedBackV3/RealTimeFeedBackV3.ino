@@ -24,6 +24,8 @@ float avgFlowhigh = 0;
 float avgFlowlow = 0;
 static uint32_t counter = 1; 
 int timecounter = 0;
+int runningtime = 0;
+int timeleft = 0;
 
 
 RTC_DS3231 rtc;
@@ -84,8 +86,12 @@ void setup() {
   sdLog(buffer1, "LowFlowRate_0.2 : New Logging Session - " + logHeader);
   Serial.println(logHeader);
 
-
   //Check if the power has been cut off for the past 1.5 hours
+  if(sdRead(buffer1) < 90 ){
+    int runningtime = sdRead(buffer1);
+    int timeleft = 90 - runningtime;
+  }
+    
 }
 
 //Writes to pump A, takes a float from 0 to 1
@@ -208,7 +214,7 @@ void loop() {
   
   //Every minute log the data into SD card , "Time + Flowrate + Counter" for desire time,  ex: 1.5 hours
   
-  if(millis() % 60000 == 0 && avgFlowlow >= 10 && avgFlowhigh >= 10) { 
+  if(millis() % 60000 == 0 && avgFlowlow >= 10 && avgFlowhigh >= 10 && timeleft == 0) { 
      
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
@@ -224,6 +230,23 @@ void loop() {
     Serial.println(writeString);
     counter ++;
   }
+
+  // run from when the power shut off
+  if(timeleft != 0 && millis() % 60000 ==0){
+    DateTime now = rtc.now();
+    year = String(now.year(), DEC);
+    //Convert from Now.year() long to Decimal String object
+    month = String(now.month(), DEC);
+    day = String(now.day(), DEC);
+    hour = String(now.hour(), DEC);
+    minute = String(now.minute(), DEC);
+    second = String(now.second(), DEC);
+    writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + " ";
+    sdLog(buffer1, writeString + avgFlowlow + " " + counter);
+    sdLog(buffer, writeString + avgFlowhigh + " " + counter);
+    Serial.println(writeString);
+    counter ++;
+   }
 
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
   

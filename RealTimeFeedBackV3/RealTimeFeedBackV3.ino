@@ -214,7 +214,7 @@ void loop() {
   
   //Every minute log the data into SD card , "Time + Flowrate + Counter" for desire time,  ex: 1.5 hours
   
-  if(millis() % 60000 == 0 && avgFlowlow >= 10 && avgFlowhigh >= 10 && timeleft == 0) { 
+  if(millis() % 60000 == 0 && avgFlowlow >= 0.1 && avgFlowhigh >= 0.1) { 
      
     DateTime now = rtc.now();
     year = String(now.year(), DEC);

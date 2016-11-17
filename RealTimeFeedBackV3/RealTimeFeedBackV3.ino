@@ -13,7 +13,7 @@
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
 
-#define TARGET_FLOW_HIGH 0.60
+#define TARGET_FLOW_HIGH 0.53
 #define TARGET_FLOW_LOW 0.18
 
 //include real time clock in the future 
@@ -169,6 +169,7 @@ void sdLog(const char * fileName, String stringToWrite) {
 //Read the last tiemcounter
 int sdRead(const char *fileName){
   File myfile = SD.open(fileName);
+  int timecount = 0 ;
   if(myFile){
     while (myFile.available()) {
     String line =  myFile.readStringUntil('\n');
@@ -180,11 +181,11 @@ int sdRead(const char *fileName){
     String secondValue = line.substring(spaceIndex+1, secondspaceIndex);
     String thirdValue = line.substring(secondspaceIndex+1, thirdspaceIndex); // To the end of the string
     String fourthValue = line.substring(thirdspaceIndex);
-    timecounter = fourthValue.toInt();
+    timecount = fourthValue.toInt();
     }
     myFile.close();      
    }
-   return timecounter;
+   return timecount;
  }
 
 void loop() {

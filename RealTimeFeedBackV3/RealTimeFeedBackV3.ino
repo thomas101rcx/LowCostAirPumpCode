@@ -13,7 +13,7 @@
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
 
-#define TARGET_FLOW_HIGH 0.53
+#define TARGET_FLOW_HIGH 0.55
 #define TARGET_FLOW_LOW 0.18
 
 //include real time clock in the future 

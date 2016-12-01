@@ -1,13 +1,10 @@
+import java.awt.event.ItemEvent;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-public class Text_Parser {
-	
-	
-
-	
+public class Text_Parser {	
 	public static void main(String [] Args){
 		ArrayList<Pump_data> DataList = new ArrayList<>();
 		try{
@@ -15,13 +12,11 @@ public class Text_Parser {
         String fileRead = br.readLine();
         while (fileRead != null)
         {
-            String[] token = fileRead.split(" ");
-        	
+            String[] token = fileRead.split(" ");	
     		float a;
     		int b;
-    		String s1,s2, s3;	
+    		String s1,s2;	
     		if(token[0].substring(0, 4).equals("High") ||token[0].substring(0, 3).equals("Low")){		
-    			 s3 = token[0].toString();
     		}
     		else{
     			 a = Float.parseFloat(token[2].toString());
@@ -31,8 +26,6 @@ public class Text_Parser {
     			 Pump_data data = new Pump_data(s1, s2, a, b);
     			 DataList.add(data);	
     		}
-
-
             // read next line before looping
             // if end of file reached 
             fileRead = br.readLine();
@@ -40,7 +33,6 @@ public class Text_Parser {
 
         // close file stream
         br.close();
-        
 		}
 		
 		catch (FileNotFoundException fnfe)
@@ -53,6 +45,21 @@ public class Text_Parser {
             ioe.printStackTrace();
         }
 		
+		for(Pump_data data : DataList){
+			int temp = data.getcounter();
+			if(temp == 1){
+				
+			}else{
+				
+				
+				
+				
+			}
+			
+			
+			
+			
+			
+		}
 	}
-
 }

@@ -170,25 +170,27 @@ void sdLog(const char * fileName, String stringToWrite) {
 int sdRead(const char *fileName){
   File myfile = SD.open(fileName);
   int timecount = 0 ;
+  int timecountarray [20];
   if(myFile){
-    while (myFile.available()) {
+    while (myFile.available()){
     String line =  myFile.readStringUntil('\n');
     int spaceIndex = line.indexOf(' ');
     // Search for the next space just after the first
-    int secondspaceIndex = line.indexOf(' ', spaceIndex+1);
+    int secondspaceIndex = line.indexOf(' ', spaceIndex + 1);
     int thirdspaceIndex  = line.indexOf(' ', secondspaceIndex + 1 );
     String firstValue = line.substring(0, spaceIndex);
     String secondValue = line.substring(spaceIndex+1, secondspaceIndex);
     String thirdValue = line.substring(secondspaceIndex+1, thirdspaceIndex); // To the end of the string
     String fourthValue = line.substring(thirdspaceIndex);
     timecount = fourthValue.toInt();
+    timecountarray[0] = timecount;
     }
     myFile.close();      
    }
-   return timecount;
+   return timecountarray[0];
  }
 
-void loop() {
+void loop(){
   static uint16_t i = 0;
   static float pwmhigh = 0.5; // For 0.6 LPM
   static float pwmlow = 0.5; // For 0.2 LPM

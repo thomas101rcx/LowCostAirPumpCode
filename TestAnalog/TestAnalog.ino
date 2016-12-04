@@ -39,6 +39,6 @@ void Return_High_Flow_Rate() {
 
 void loop() {
   // put your main code here, to run repeatedly:
- // Return_Low_Flow_Rate();
-  Return_High_Flow_Rate();
+  Return_Low_Flow_Rate();
+  //Return_High_Flow_Rate();
 }

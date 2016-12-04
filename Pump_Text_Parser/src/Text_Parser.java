@@ -1,9 +1,23 @@
 import java.awt.event.ItemEvent;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.Format;
+import java.text.SimpleDateFormat;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import javax.xml.crypto.Data;
+
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException;
+
+import sun.nio.cs.UnicodeEncoder;
 public class Text_Parser {	
 	public static void main(String [] Args){
 		ArrayList<Pump_data> DataList = new ArrayList<>();
@@ -45,21 +59,6 @@ public class Text_Parser {
             ioe.printStackTrace();
         }
 		
-		for(Pump_data data : DataList){
-			int temp = data.getcounter();
-			if(temp == 1){
-				
-			}else{
-				
-				
-				
-				
-			}
-			
-			
-			
-			
-			
-		}
+//		
 	}
 }

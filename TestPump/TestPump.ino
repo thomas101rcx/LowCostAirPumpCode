@@ -5,6 +5,8 @@
 
 #define TARGET_FLOW_HIGH 0.60
 #define TARGET_FLOW_LOW 0.18
+int i = 0 ;
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -30,8 +32,13 @@ void writePumpB(float p) {
 }
 void loop() {
 
-  writePumpA(1);
-  writePumpB(1);
+    analogWrite(PUMP_A_PIN, i);
+
+
+  i = i + 1;
+
+
+ // writePumpB(1);
   // put your main code here, to run repeatedly:
 
 }

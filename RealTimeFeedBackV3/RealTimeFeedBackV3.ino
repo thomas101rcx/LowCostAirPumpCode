@@ -201,7 +201,7 @@ void loop(){
   if (millis() + i >= 0)
   //Every 20 msec update the pump PWM
   {
-    i += 20;
+    //i += 20;
     float errorHigh = TARGET_FLOW_HIGH - avgFlowhigh;
     float errorLow = TARGET_FLOW_LOW - avgFlowlow;
     pwmhigh = max(pwmhigh, 0); // For pwmhigh < 0

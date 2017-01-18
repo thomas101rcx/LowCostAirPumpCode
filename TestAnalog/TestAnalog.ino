@@ -16,12 +16,12 @@ void Return_Low_Flow_Rate() {
   float curFlow = 0;
   uint16_t sensorvalue = 0;
 
-  sensorvalue = analogRead(A7);
+  sensorvalue = analogRead(A6);
   float Vo = sensorvalue * (5.0 / 1023.0);
 
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowlow += (curFlow - avgFlowlow) / 32;
-  Serial.println(avgFlowlow);
+  Serial.println(sensorvalue);
 }
 
 
@@ -30,11 +30,12 @@ void Return_High_Flow_Rate() {
   float curFlow = 0;
   uint16_t sensorvalue = 0;
   sensorvalue = analogRead(A6);
-  float Vo = sensorvalue * (5.0 / 1023.0);
   Serial.println(sensorvalue);
+  float Vo = sensorvalue * (5.0 / 1023.0);
+  //Serial.println(sensorvalue);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowhigh += (curFlow - avgFlowhigh) / 32;
-  Serial.println(avgFlowhigh);
+  //Serial.println(avgFlowhigh);
 }
 
 void loop() {

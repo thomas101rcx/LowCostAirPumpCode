@@ -6,17 +6,12 @@
 #define PUMP_A_PIN 5 // 0.6LPM
 #define PUMP_B_PIN 3 // 0.2LPM
 
-//#define FLOW_A_ADDR 0x49
-
-
 //PumpA is high, PumpB is low
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
 
 #define TARGET_FLOW_HIGH 0.53
 #define TARGET_FLOW_LOW 0.18
-
-//include real time clock in the future
 
 //Change the defulat values base on the reading from the calibrator
 
@@ -58,11 +53,6 @@ void setup() {
   }
   Wire.begin();
   rtc.begin();
-
-  //Flow meter high setup
-
-//  Wire.beginTransmission(0x49);
-//  Wire.endTransmission();
 
   //Pump setup
 
@@ -109,22 +99,6 @@ void writePumpB(float p) {
   uint8_t power = p * 255;
   analogWrite(PUMP_B_PIN, power);
 }
-
-// This is the code for Digital I2C flow meter
-//Gets the flow readings through I2C protocal (2 bytes) and return the actual flow rate
-//void Return_High_Flow_Rate() {
-//  float curFlow = 0;
-//  uint8_t high = 0;
-//  uint16_t digitalcode = 0;
-//
-//  Wire.requestFrom(0x49, 2);
-//  high = Wire.read();
-//  digitalcode = (high << 8) + Wire.read();
-//
-//  curFlow = 0.750 * ((((float) digitalcode / 16384.0) - 0.5) / .4);
-//  avgFlowhigh += (curFlow - avgFlowhigh) / 64;
-//  //Get the average by dividing a number, how many data points do we need to take the average
-//}
 
 void Return_Low_Flow_Rate() {
   float curFlow = 0;
@@ -210,8 +184,8 @@ void loop(){
 
 
 
-    integral = integral + (error*iteration_time)
-    derivative = (error - error_prior)/ iteration_time
+    //integral = integral + (error*iteration_time)
+    //derivative = (error - error_prior)/ iteration_time
     pwmhigh += errorHigh / 100;
     pwmlow += errorLow / 100;
     // 100 is a time constant that tells us how precise do we want to get to the desire flow rate/ power output.

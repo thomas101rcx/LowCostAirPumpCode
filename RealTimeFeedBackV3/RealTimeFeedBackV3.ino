@@ -6,27 +6,22 @@
 #define PUMP_A_PIN 5 // 0.6LPM
 #define PUMP_B_PIN 3 // 0.2LPM
 
-//#define FLOW_A_ADDR 0x49
-
-
 //PumpA is high, PumpB is low
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
 
-#define TARGET_FLOW_HIGH 0.53
+#define TARGET_FLOW_HIGH 0.55
 #define TARGET_FLOW_LOW 0.18
-
-//include real time clock in the future 
 
 //Change the defulat values base on the reading from the calibrator
 
 float avgFlowhigh = 0;
 float avgFlowlow = 0;
 static uint32_t counter = 1; 
+static uint32_t restartcounter = 0;
 int timecounter = 0;
 int runningtime = 0;
 int timeleft = 0;
-
 
 RTC_DS3231 rtc;
 
@@ -35,6 +30,8 @@ File myFile;
 String writeString;
 const char * buffer = "HighFlow.txt";
 const char * buffer1 = "LowFlow.txt";
+
+
 void setup() {
 
   Serial.begin(9600);
@@ -59,22 +56,19 @@ void setup() {
   Wire.begin();
   rtc.begin();
 
-  //Flow meter high setup
-
-//  Wire.beginTransmission(0x49);
-//  Wire.endTransmission();
-
   //Pump setup
 
   pinMode(PUMP_A_PIN, OUTPUT);
   pinMode(PUMP_B_PIN, OUTPUT);
 
   //SD card setup
+  
   if (SD.begin(10) == false) {
     Serial.println("It didn't initialized");
   }
 
   //Writes in The inital starting time (Tstart) to SD card
+  
   year = String(now.year(), DEC);
   month = String(now.month(), DEC);
   day = String(now.day(), DEC);
@@ -87,6 +81,7 @@ void setup() {
   Serial.println(logHeader);
 
   //Check if the power has been cut off for the past 1.5 hours
+  
   if(sdRead(buffer1) < 90 ){
     int runningtime = sdRead(buffer1);
     int timeleft = 90 - runningtime;
@@ -95,6 +90,7 @@ void setup() {
 }
 
 //Writes to pump A, takes a float from 0 to 1
+
 void writePumpA(float p) {
   p = max(p, 0);
   p = min(1, p);
@@ -103,28 +99,13 @@ void writePumpA(float p) {
 }
 
 //Writes to pump B, takes a float from 0 to 1
+
 void writePumpB(float p) {
   p = max(p, 0);
   p = min(1, p);
   uint8_t power = p * 255;
   analogWrite(PUMP_B_PIN, power);
 }
-
-// This is the code for Digital I2C flow meter
-//Gets the flow readings through I2C protocal (2 bytes) and return the actual flow rate
-//void Return_High_Flow_Rate() {
-//  float curFlow = 0;
-//  uint8_t high = 0;
-//  uint16_t digitalcode = 0;
-//
-//  Wire.requestFrom(0x49, 2);
-//  high = Wire.read();
-//  digitalcode = (high << 8) + Wire.read();
-//
-//  curFlow = 0.750 * ((((float) digitalcode / 16384.0) - 0.5) / .4);
-//  avgFlowhigh += (curFlow - avgFlowhigh) / 64;
-//  //Get the average by dividing a number, how many data points do we need to take the average
-//}
 
 void Return_Low_Flow_Rate() {
   float curFlow = 0;
@@ -166,7 +147,7 @@ void sdLog(const char * fileName, String stringToWrite) {
   }
 }
 
-//Read the last tiemcounter
+//Read the last tiemcounter from SD card when power is shut off
 int sdRead(const char *fileName){
   File myfile = SD.open(fileName);
   int timecount = 0 ;
@@ -191,6 +172,7 @@ int sdRead(const char *fileName){
  }
 
 void loop(){
+  
   static uint16_t i = 0;
   static float pwmhigh = 0.5; // For 0.6 LPM
   static float pwmlow = 0.5; // For 0.2 LPM
@@ -199,9 +181,7 @@ void loop(){
   Return_Low_Flow_Rate();
 
   if (millis() + i >= 0)
-  //Every 20 msec update the pump PWM
   {
-    //i += 20;
     float errorHigh = TARGET_FLOW_HIGH - avgFlowhigh;
     float errorLow = TARGET_FLOW_LOW - avgFlowlow;
     pwmhigh = max(pwmhigh, 0); // For pwmhigh < 0
@@ -235,7 +215,9 @@ void loop(){
   }
 
   // run from when the power shut off
-  if(timeleft != 0 && millis() % 60000 ==0){
+  
+  if(timeleft != 0 && millis() % 60000 ==0 && avgFlowlow >= 0.1 && avgFlowhigh >=0.1){
+    restartcounter = runningtime;
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
     //Convert from Now.year() long to Decimal String object
@@ -245,10 +227,16 @@ void loop(){
     minute = String(now.minute(), DEC);
     second = String(now.second(), DEC);
     writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + " ";
-    sdLog(buffer1, writeString + avgFlowlow + " " + counter);
-    sdLog(buffer, writeString + avgFlowhigh + " " + counter);
+    sdLog(buffer1, writeString + avgFlowlow + " " + restartcounter);
+    sdLog(buffer, writeString + avgFlowhigh + " " + restartcounter);
     Serial.println(writeString);
-    counter ++;
+    restartcounter ++;
+   }
+
+  if(restartcounter >=90){
+   writePumpA(0);
+   writePumpB(0); 
+    
    }
 
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds

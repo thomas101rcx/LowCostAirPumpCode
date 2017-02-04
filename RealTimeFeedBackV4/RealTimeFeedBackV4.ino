@@ -1,6 +1,6 @@
-#include <Wire.h>
+#include <Wire.h> 
 #include "RTClib.h"
-#include <SD.h>
+#include <SD.h> 
 #include <stdint.h>
 
 #define PUMP_A_PIN 5 // 0.6LPM
@@ -10,18 +10,19 @@
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
 
-#define TARGET_FLOW_HIGH 0.53
+#define TARGET_FLOW_HIGH 0.55
 #define TARGET_FLOW_LOW 0.18
 
-//Change the defulat values base on the reading from the calibrator
+//Change the default values base on the reading from the calibrator
 
 float avgFlowhigh = 0;
 float avgFlowlow = 0;
-static uint32_t counter = 1;
+static uint32_t counter = 1; 
+static uint32_t restartcounter = 0;
 int timecounter = 0;
 int runningtime = 0;
 int timeleft = 0;
-
+bool restart = true;
 
 RTC_DS3231 rtc;
 
@@ -30,6 +31,8 @@ File myFile;
 String writeString;
 const char * buffer = "HighFlow.txt";
 const char * buffer1 = "LowFlow.txt";
+
+
 void setup() {
 
   Serial.begin(9600);
@@ -37,19 +40,25 @@ void setup() {
   //RTC setup
 
   if (!rtc.begin()) {
-    Serial.println("Can't fine RTC");
+    Serial.println("Can't fine RTC"); 
     while (1);
+  }
+  else{
+    Serial.println("RTC initialized successfully");  
   }
 
   DateTime now = rtc.now(); // Catch the time on RTC for now
   DateTime PCTime = DateTime(__DATE__, __TIME__); // Catch the time on PC for now
-  //Serial.println(PCTime.year());
 
-  //If any discrepencies , update with the time on PC
-
-  if (now.unixtime() < PCTime.unixtime() || now.unixtime() > PCTime.unixtime()) {
+  //If any discrepencies , update with the time on PC 
+  //Manually change this code when the timezone is different 
+  // Uncomment the rtc.adjust(DateTime(__DATE__, __TIME__));
+  // Upload it again to Arduino
+  // Check if the time is correct
+  // Comment out rtc.adjust(DateTime(__DATE__, __TIME__)); again
+  // Upload the entire code again
+  if (now.unixtime() < PCTime.unixtime()) {
     rtc.adjust(DateTime(__DATE__, __TIME__));
-    Serial.println(now.year());
   }
   Wire.begin();
   rtc.begin();
@@ -60,11 +69,23 @@ void setup() {
   pinMode(PUMP_B_PIN, OUTPUT);
 
   //SD card setup
+  
   if (SD.begin(10) == false) {
     Serial.println("It didn't initialized");
+  }else{
+    Serial.println("SD card Initialized successfully");
   }
 
   //Writes in The inital starting time (Tstart) to SD card
+  
+ 
+
+  //Check if the power has been cut off for the past 1.5 hours
+
+  int a = sdRead(buffer);
+  Serial.println(a);
+  
+  if(sdRead(buffer) == 0){
   year = String(now.year(), DEC);
   month = String(now.month(), DEC);
   day = String(now.day(), DEC);
@@ -74,17 +95,19 @@ void setup() {
   String logHeader = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
   sdLog(buffer, "HighFlowRate_0.6: New Logging Session - " + logHeader);
   sdLog(buffer1, "LowFlowRate_0.2 : New Logging Session - " + logHeader);
-  Serial.println(logHeader);
-
-  //Check if the power has been cut off for the past 1.5 hours
-  if(sdRead(buffer1) < 90 ){
-    int runningtime = sdRead(buffer1);
-    int timeleft = 90 - runningtime;
+  Serial.println(logHeader); 
+  restart = false;
   }
-
+  else{
+     runningtime = sdRead(buffer);
+     timeleft = 90 - runningtime;
+     restart = true;
+  }
+    
 }
 
 //Writes to pump A, takes a float from 0 to 1
+
 void writePumpA(float p) {
   p = max(p, 0);
   p = min(1, p);
@@ -93,6 +116,7 @@ void writePumpA(float p) {
 }
 
 //Writes to pump B, takes a float from 0 to 1
+
 void writePumpB(float p) {
   p = max(p, 0);
   p = min(1, p);
@@ -115,7 +139,7 @@ void Return_High_Flow_Rate() {
   uint16_t sensorvalue = 0;
   sensorvalue = analogRead(A6);
   float Vo = sensorvalue * (5.0 / 1023.0);
-  //Serial.println(sensorvalue);
+ // Serial.println(sensorvalue);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowhigh += (curFlow - avgFlowhigh) / 32;
   //Serial.println(avgFlowhigh);
@@ -133,6 +157,10 @@ void sdLog(const char * fileName, String stringToWrite) {
     // close the file:
     myFile.close();
     Serial.println("done.");
+    digitalWrite(13, HIGH);
+    delay(300);
+    digitalWrite(13, LOW);
+    delay(300);
   } else {
     // if the file didn't open, print an error:
     Serial.print("error opening ");
@@ -140,14 +168,14 @@ void sdLog(const char * fileName, String stringToWrite) {
   }
 }
 
-//Read the last tiemcounter
+//Read the last tiemcounter from SD card when power is shut off
 int sdRead(const char *fileName){
   File myfile = SD.open(fileName);
   int timecount = 0 ;
   int timecountarray [20];
-  if(myFile){
-    while (myFile.available()){
-    String line =  myFile.readStringUntil('\n');
+  if(myfile){
+    while (myfile.available()){
+    String line =  myfile.readStringUntil('\n');
     int spaceIndex = line.indexOf(' ');
     // Search for the next space just after the first
     int secondspaceIndex = line.indexOf(' ', spaceIndex + 1);
@@ -159,44 +187,39 @@ int sdRead(const char *fileName){
     timecount = fourthValue.toInt();
     timecountarray[0] = timecount;
     }
-    myFile.close();
+    myfile.close();      
    }
    return timecountarray[0];
  }
 
 void loop(){
-  static uint16_t i = 0;
+  
+
   static float pwmhigh = 0.5; // For 0.6 LPM
   static float pwmlow = 0.5; // For 0.2 LPM
   //The reason to set pwmhigh and pwmlow is to start with a initial value for the feedback loop to either add up the error or subtract the error, reaching the desire power output -> desire flowrate.
   Return_High_Flow_Rate();
   Return_Low_Flow_Rate();
 
-  if (millis() + i >= 0)
-  //Every 20 msec update the pump PWM
+  if (millis() >= 0)
   {
     float errorHigh = TARGET_FLOW_HIGH - avgFlowhigh;
     float errorLow = TARGET_FLOW_LOW - avgFlowlow;
     pwmhigh = max(pwmhigh, 0); // For pwmhigh < 0
     pwmhigh = min(1, pwmhigh); // For pwmhigh > 1
-    pwmlow = max(pwmlow, 0); // For pwmhigh < 0
+    pwmlow = max(pwmlow, 0); // For pwmhigh < 0 
     pwmlow = min(1, pwmlow); // For pwmhigh > 1
-
-
-
-    //integral = integral + (error*iteration_time)
-    //derivative = (error - error_prior)/ iteration_time
     pwmhigh += errorHigh / 100;
     pwmlow += errorLow / 100;
     // 100 is a time constant that tells us how precise do we want to get to the desire flow rate/ power output.
     writePumpA(pwmhigh);
     writePumpB(pwmlow);
   }
-
+  
   //Every minute log the data into SD card , "Time + Flowrate + Counter" for desire time,  ex: 1.5 hours
-
-  if(millis() % 60000 == 0 && avgFlowlow >= 0.1 && avgFlowhigh >= 0.1) {
-
+  
+  if(millis() % 3000 == 0 && restart == false) { 
+     
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
     //Convert from Now.year() long to Decimal String object
@@ -213,7 +236,9 @@ void loop(){
   }
 
   // run from when the power shut off
-  if(timeleft != 0 && millis() % 60000 ==0){
+  
+  if (restart == true && millis() % 3000 ==0){
+    restartcounter = runningtime;
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
     //Convert from Now.year() long to Decimal String object
@@ -223,18 +248,25 @@ void loop(){
     minute = String(now.minute(), DEC);
     second = String(now.second(), DEC);
     writeString = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second + " ";
-    sdLog(buffer1, writeString + avgFlowlow + " " + counter);
-    sdLog(buffer, writeString + avgFlowhigh + " " + counter);
+    sdLog(buffer1, writeString + avgFlowlow + " " + restartcounter);
+    sdLog(buffer, writeString + avgFlowhigh + " " + restartcounter);
     Serial.println(writeString);
-    counter ++;
+    restartcounter ++;
+    
    }
 
+  //Restart counter will stop once it reaches 90 minutes
+  
+  if(restartcounter > 90){
+   writePumpA(0);
+   writePumpB(0); 
+  }
+
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
-
-  if (millis() >= 5400000) {
-
+  
+  if (counter >= 90) {  
     writePumpA(0);
     writePumpB(0);
-
+    
   }
 }

@@ -13,7 +13,7 @@
 #define TARGET_FLOW_HIGH 0.55
 #define TARGET_FLOW_LOW 0.18
 
-//Change the defulat values base on the reading from the calibrator
+//Change the default values base on the reading from the calibrator
 
 float avgFlowhigh = 0;
 float avgFlowlow = 0;
@@ -39,19 +39,25 @@ void setup() {
   //RTC setup
 
   if (!rtc.begin()) {
-    Serial.println("Can't fine RTC");
+    Serial.println("Can't fine RTC"); 
     while (1);
+  }
+  else{
+    Serial.println("RTC initialized successfully");  
   }
 
   DateTime now = rtc.now(); // Catch the time on RTC for now
   DateTime PCTime = DateTime(__DATE__, __TIME__); // Catch the time on PC for now
-  //Serial.println(PCTime.year());
 
   //If any discrepencies , update with the time on PC 
-
-  if (now.unixtime() < PCTime.unixtime() || now.unixtime() > PCTime.unixtime()) {
-    rtc.adjust(DateTime(__DATE__, __TIME__));
-    Serial.println(now.year());
+  //Manually change this code when the timezone is different 
+  // Uncomment the rtc.adjust(DateTime(__DATE__, __TIME__));
+  // Upload it again to Arduino
+  // Check if the time is correct
+  // Comment out rtc.adjust(DateTime(__DATE__, __TIME__)); again
+  // Upload the entire code again
+  if (now.unixtime() < PCTime.unixtime()) {
+   // rtc.adjust(DateTime(__DATE__, __TIME__));
   }
   Wire.begin();
   rtc.begin();
@@ -65,6 +71,8 @@ void setup() {
   
   if (SD.begin(10) == false) {
     Serial.println("It didn't initialized");
+  }else{
+    Serial.println("SD card Initialized successfully");
   }
 
   //Writes in The inital starting time (Tstart) to SD card
@@ -82,7 +90,7 @@ void setup() {
 
   //Check if the power has been cut off for the past 1.5 hours
   
-  if(sdRead(buffer1) < 90 ){
+  if(sdRead(buffer1) < 90 || sdRead(buffer) < 90){
     int runningtime = sdRead(buffer1);
     int timeleft = 90 - runningtime;
   }
@@ -122,7 +130,7 @@ void Return_High_Flow_Rate() {
   uint16_t sensorvalue = 0;
   sensorvalue = analogRead(A6);
   float Vo = sensorvalue * (5.0 / 1023.0);
-  //Serial.println(sensorvalue);
+ // Serial.println(sensorvalue);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowhigh += (curFlow - avgFlowhigh) / 32;
   //Serial.println(avgFlowhigh);
@@ -140,6 +148,10 @@ void sdLog(const char * fileName, String stringToWrite) {
     // close the file:
     myFile.close();
     Serial.println("done.");
+    digitalWrite(13, HIGH);
+    delay(300);
+    digitalWrite(13, LOW);
+    delay(300);
   } else {
     // if the file didn't open, print an error:
     Serial.print("error opening ");
@@ -152,9 +164,9 @@ int sdRead(const char *fileName){
   File myfile = SD.open(fileName);
   int timecount = 0 ;
   int timecountarray [20];
-  if(myFile){
-    while (myFile.available()){
-    String line =  myFile.readStringUntil('\n');
+  if(myfile){
+    while (myfile.available()){
+    String line =  myfile.readStringUntil('\n');
     int spaceIndex = line.indexOf(' ');
     // Search for the next space just after the first
     int secondspaceIndex = line.indexOf(' ', spaceIndex + 1);
@@ -166,21 +178,21 @@ int sdRead(const char *fileName){
     timecount = fourthValue.toInt();
     timecountarray[0] = timecount;
     }
-    myFile.close();      
+    myfile.close();      
    }
    return timecountarray[0];
  }
 
 void loop(){
   
-  static uint16_t i = 0;
+
   static float pwmhigh = 0.5; // For 0.6 LPM
   static float pwmlow = 0.5; // For 0.2 LPM
   //The reason to set pwmhigh and pwmlow is to start with a initial value for the feedback loop to either add up the error or subtract the error, reaching the desire power output -> desire flowrate.
   Return_High_Flow_Rate();
   Return_Low_Flow_Rate();
 
-  if (millis() + i >= 0)
+  if (millis() >= 0)
   {
     float errorHigh = TARGET_FLOW_HIGH - avgFlowhigh;
     float errorLow = TARGET_FLOW_LOW - avgFlowlow;
@@ -233,16 +245,16 @@ void loop(){
     restartcounter ++;
    }
 
-  if(restartcounter >=90){
+  //Restart counter will stop once it reaches 90 minutes
+  
+  if(restartcounter > 90){
    writePumpA(0);
    writePumpB(0); 
-    
-   }
+  }
 
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
   
   if (millis() >= 5400000) {  
-     
     writePumpA(0);
     writePumpB(0);
     

@@ -6,20 +6,16 @@
 #define PUMP_A_PIN 5 // 0.6LPM
 #define PUMP_B_PIN 3 // 0.2LPM
 
-//#define FLOW_A_ADDR 0x49
-
-
 //PumpA is high, PumpB is low
 //Any variables that ends with a high means 0.6LPM
 //Any variables that ends with a low  means 0.2LPM
-
-#define TARGET_FLOW_HIGH 0
-#define TARGET_FLOW_LOW 0
 
 //include real time clock in the future 
 
 //Change the defulat values base on the reading from the calibrator
 
+float TARGET_FLOW_HIGH  = 0; 
+float TARGET_FLOW_LOW = 0;
 float avgFlowhigh = 0;
 float avgFlowlow = 0;
 static uint32_t counter = 1; 
@@ -107,7 +103,6 @@ void Return_Low_Flow_Rate() {
   float Vo = sensorvalue * (5.0 / 1023.0);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowlow += (curFlow - avgFlowlow) / 32;
-  //Serial.println(avgFlowlow);
 }
 
 void Return_High_Flow_Rate() {
@@ -115,10 +110,8 @@ void Return_High_Flow_Rate() {
   uint16_t sensorvalue = 0;
   sensorvalue = analogRead(A6);
   float Vo = sensorvalue * (5.0 / 1023.0);
-  //Serial.println(sensorvalue);
   curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
   avgFlowhigh += (curFlow - avgFlowhigh) / 32;
-  //Serial.println(avgFlowhigh);
 }
 
 //Writes into SD card
@@ -140,8 +133,6 @@ void sdLog(const char * fileName, String stringToWrite) {
   }
 }
 
-
-
 void loop(){
   static uint16_t i = 0;
   static float pwmhigh = 0.5; // For 0.6 LPM
@@ -150,10 +141,8 @@ void loop(){
   Return_High_Flow_Rate();
   Return_Low_Flow_Rate();
 
-  if (millis() + i >= 0)
-  //Every 20 msec update the pump PWM
+  if (millis()  >= 0)
   {
-    i += 20;
     float errorHigh = TARGET_FLOW_HIGH - avgFlowhigh;
     float errorLow = TARGET_FLOW_LOW - avgFlowlow;
     pwmhigh = max(pwmhigh, 0); // For pwmhigh < 0
@@ -167,10 +156,9 @@ void loop(){
     writePumpB(pwmlow);
   }
   
-  //Every 5 seconds log the data into SD card , "Time + Flowrate + Counter" for desire time,  ex: 1.5 hours
+  //Every 5 seconds log the data into SD card , "Time + Flowrate + Counter" for desire time, 
   
   if(millis() % 5000 == 0 && avgFlowlow >= 0.1 && avgFlowhigh >= 0.1) { 
-     
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
     //Convert from Now.year() long to Decimal String object
@@ -185,10 +173,66 @@ void loop(){
     Serial.println(writeString);
     counter ++;
   }
-  //Turn off at one minute
-  if(millis() >=60000){
+
+  if(millis() > 60000 && millis() <= 65000){
+   writePumpA(0);
+   writePumpB(0);
+   }
+   if(millis() > 65000 && millis() <= 125000){
+   TARGET_FLOW_HIGH = 0.1;
+   TARGET_FLOW_LOW = 0.1;
+   }
+   if(millis() > 125000 && millis() <= 130000){
+   writePumpA(0);
+   writePumpB(0);
+   }
+   if(millis() > 130000 && millis() <= 190000){
+   TARGET_FLOW_HIGH = 0.2;
+   TARGET_FLOW_LOW = 0.2;
+   }
+   if(millis() > 190000 && millis() <= 195000){
+   writePumpA(0);
+   writePumpB(0);
+   }
+   if(millis() > 195000 && millis() <= 255000){
+   TARGET_FLOW_HIGH = 0.3;
+   TARGET_FLOW_LOW = 0.3;
+   }
+   if(millis() > 255000 && millis() <= 260000){
     writePumpA(0);
     writePumpB(0);
+   }
+   if(millis() > 260000 && millis() <= 320000){
+   TARGET_FLOW_HIGH = 0.4;
+   TARGET_FLOW_LOW = 0.4;
+   }
+   if(millis() > 320000 && millis() <= 325000){
+   writePumpA(0);
+   writePumpB(0);
+   }
+   if(millis() > 325000 && millis() <= 385000){
+   TARGET_FLOW_HIGH = 0.5;
+   TARGET_FLOW_LOW = 0.5;
+   }
+   if(millis() > 385000 && millis() <= 390000){
+   writePumpA(0);
+   writePumpB(0);
+   }
+   if(millis() > 390000 && millis() <= 450000){
+   TARGET_FLOW_HIGH = 0.6;
+   TARGET_FLOW_LOW = 0.6;
+   }
+   if(millis() > 450000 && millis() <= 510000){
+   writePumpA(0);
+   writePumpB(0);
+   }
+   if(millis() > 510000 && millis() <= 570000){
+   TARGET_FLOW_HIGH = 0.7;
+   TARGET_FLOW_LOW = 0.7;
+   }
+   if(millis() > 570000){
+   writePumpA(0);
+   writePumpB(0);
    }
   
 }

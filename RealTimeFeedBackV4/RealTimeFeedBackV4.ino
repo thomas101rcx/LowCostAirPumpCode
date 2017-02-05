@@ -58,7 +58,7 @@ void setup() {
   // Comment out rtc.adjust(DateTime(__DATE__, __TIME__)); again
   // Upload the entire code again
   if (now.unixtime() < PCTime.unixtime()) {
-    rtc.adjust(DateTime(__DATE__, __TIME__));
+    //rtc.adjust(DateTime(__DATE__, __TIME__));
   }
   Wire.begin();
   rtc.begin();
@@ -76,32 +76,35 @@ void setup() {
     Serial.println("SD card Initialized successfully");
   }
 
-  //Writes in The inital starting time (Tstart) to SD card
+
   
  
-
   //Check if the power has been cut off for the past 1.5 hours
 
-  int a = sdRead(buffer);
-  Serial.println(a);
-  
+  //This is to read the last counter value from previous starting point
+  //int a = sdRead(buffer);
+  //Serial.println(a);
+
   if(sdRead(buffer) == 0){
-  year = String(now.year(), DEC);
-  month = String(now.month(), DEC);
-  day = String(now.day(), DEC);
-  hour = String(now.hour(), DEC);
-  minute = String(now.minute(), DEC);
-  second = String(now.second(), DEC);
-  String logHeader = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
-  sdLog(buffer, "HighFlowRate_0.6: New Logging Session - " + logHeader);
-  sdLog(buffer1, "LowFlowRate_0.2 : New Logging Session - " + logHeader);
-  Serial.println(logHeader); 
-  restart = false;
+    //When we can start a new Trial , writes in The inital starting time (Tstart) to SD card
+    year = String(now.year(), DEC);
+    month = String(now.month(), DEC);
+    day = String(now.day(), DEC);
+    hour = String(now.hour(), DEC);
+    minute = String(now.minute(), DEC);
+    second = String(now.second(), DEC);
+    String logHeader = year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + second;
+    sdLog(buffer, "HighFlowRate_0.6: New Logging Session - " + logHeader);
+    sdLog(buffer1, "LowFlowRate_0.2 : New Logging Session - " + logHeader);
+    Serial.println(logHeader); 
+    restart = false;
   }
   else{
-     runningtime = sdRead(buffer);
-     timeleft = 90 - runningtime;
-     restart = true;
+    //Read from previous trial that doesn't last 90 minutes, start from the point and continue until 90 minutes
+    runningtime = sdRead(buffer);
+    timeleft = 90 - runningtime;
+    restartcounter = runningtime;
+    restart = true;
   }
     
 }
@@ -218,7 +221,7 @@ void loop(){
   
   //Every minute log the data into SD card , "Time + Flowrate + Counter" for desire time,  ex: 1.5 hours
   
-  if(millis() % 3000 == 0 && restart == false) { 
+  if(restart == false && millis() % 60000 == 0  && avgFlowlow >= 0.1 && avgFlowhigh >= 0.1) { 
      
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
@@ -237,8 +240,7 @@ void loop(){
 
   // run from when the power shut off
   
-  if (restart == true && millis() % 3000 ==0){
-    restartcounter = runningtime;
+  if (restart == true && millis() % 60000 ==0 && avgFlowlow >= 0.1 && avgFlowhigh >= 0.1){
     DateTime now = rtc.now();
     year = String(now.year(), DEC);
     //Convert from Now.year() long to Decimal String object
@@ -252,7 +254,6 @@ void loop(){
     sdLog(buffer, writeString + avgFlowhigh + " " + restartcounter);
     Serial.println(writeString);
     restartcounter ++;
-    
    }
 
   //Restart counter will stop once it reaches 90 minutes
@@ -262,9 +263,9 @@ void loop(){
    writePumpB(0); 
   }
 
-  //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
+  //Turn off pump once it reach 90 minutes
   
-  if (counter >= 90) {  
+  if (counter > 90) {  
     writePumpA(0);
     writePumpB(0);
     

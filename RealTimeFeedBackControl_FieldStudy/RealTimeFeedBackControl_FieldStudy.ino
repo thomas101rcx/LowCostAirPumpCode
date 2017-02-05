@@ -57,7 +57,7 @@ void setup() {
   // Comment out rtc.adjust(DateTime(__DATE__, __TIME__)); again
   // Upload the entire code again
   if (now.unixtime() < PCTime.unixtime()) {
-   // rtc.adjust(DateTime(__DATE__, __TIME__));
+    //rtc.adjust(DateTime(__DATE__, __TIME__));
   }
   Wire.begin();
   rtc.begin();
@@ -89,7 +89,6 @@ void setup() {
   Serial.println(logHeader);
 
   //Check if the power has been cut off for the past 1.5 hours
-  
   if(sdRead(buffer1) < 90 || sdRead(buffer) < 90){
     int runningtime = sdRead(buffer1);
     int timeleft = 90 - runningtime;
@@ -224,6 +223,7 @@ void loop(){
     sdLog(buffer, writeString + avgFlowhigh + " " + counter);
     Serial.println(writeString);
     counter ++;
+    Serial.println(counter);
   }
 
   // run from when the power shut off
@@ -254,7 +254,7 @@ void loop(){
 
   //Turn off pumps around 1.5 hours = 5,400,000 miliseconds
   
-  if (millis() >= 5400000) {  
+  if (counter > 90) {  
     writePumpA(0);
     writePumpB(0);
     

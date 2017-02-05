@@ -28,7 +28,7 @@ void setup() {
 
   //If any discrepencies , update with the time on  PC
   if (now.unixtime() < PCTime.unixtime()) {
-    //rtc.adjust(DateTime(__DATE__, __TIME__));
+    rtc.adjust(DateTime(__DATE__, __TIME__));
   }
   if (SD.begin(10) == false) {
     Serial.println("It didn't initialized");

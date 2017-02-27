@@ -1,4 +1,4 @@
-
+#include <Wire.h>
 float avgFlowlow = 0;
 float avgFlowhigh = 0;
 
@@ -19,13 +19,14 @@ void setup() {
 void Return_Low_Flow_Rate() {
   float curFlow = 0;
   uint16_t sensorvalue = 0;
-  sensorvalue = analogRead(A7);
-  Serial.println("The analog output for lowflow  is " + sensorvalue );
-  float Vo = sensorvalue * (5.0 / 1023.0);
-  curFlow = 0.75 * (((Vo / 5) - 0.5) / 0.4);
+  sensorvalue = analogRead(A4);
+  Serial.println(sensorvalue);
+ // Serial.println("The analog output for lowflow  is " + sensorvalue );
+  float Vo = sensorvalue * (3.3 / 1023.0);
+  curFlow = 2*Vo - 2;
   avgFlowlow += (curFlow - avgFlowlow) / 32;
-  Serial.print("The current average Flow recorded from the lowflow sensor is ");
-  Serial.println(avgFlowlow);
+ // Serial.print("The current average Flow recorded from the lowflow sensor is ");
+ //Serial.println(avgFlowlow);
 }
 
 
@@ -44,5 +45,5 @@ void Return_High_Flow_Rate() {
 
 void loop(){
   Return_Low_Flow_Rate();
-  Return_High_Flow_Rate();
+  //Return_High_Flow_Rate();
 }

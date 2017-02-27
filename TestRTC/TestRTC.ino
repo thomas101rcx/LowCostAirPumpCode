@@ -1,6 +1,9 @@
 #include <Wire.h>
 #include "RTClib.h"
 #include <SD.h>
+#include <SPI.h>
+#include <SD_t3.h>
+
 
 //This code is to test RTC and micro-SD card reader / micro-SD card
 //The output of this code will be  the current time on RTC (YYMMDD, HourMinuteSeconds) displayed on the serial monitor and writes into a file called RTC_SD_Checker.txt
@@ -100,7 +103,7 @@ void sdLog(const char * fileName, String stringToWrite) {
 int sdRead(const char *fileName){
   File myfile = SD.open(fileName);
   int timecount = 0 ;
-  int timecountarray [20];
+  int timecountarray [20] = {0};
   if(myFile){
     while (myFile.available()){
     String line =  myFile.readStringUntil('\n');
